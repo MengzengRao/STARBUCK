@@ -3,8 +3,9 @@ var app        = express();                 // define our app using express
 var bodyParser = require('body-parser');
 var Order    = require('./MODELS/order');
 var mongoose = require('mongoose');
- 
-mongoose.connect('mongodb://ec2-34-208-211-160.us-west-2.compute.amazonaws.com/starbucks');
+var user = "starbucks";
+var password = "starbuckspwd"; 
+mongoose.connect('mongodb://db1.buckstest.com:27017/starbucks');
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
@@ -49,7 +50,7 @@ router.route('/order')
             }
            console.log(req.body);
             STATUS = "Successful" ;
-            res.status(200).send(order.id);
+            res.status(200).send(order);
         
              
     });
@@ -79,31 +80,26 @@ router.route('/order')
     }); 
   router.route('/updateorder')
     .post(function(req, res) {
-         Order.find({'yourname':req.body.yourname,'date':req.body.date}, function(err, order) {
-
-            if (err)
-                res.send({message : 'Cannot update the order'});
-         	var order = new Order();
-            order.amount = req.body.amount ;
-         	order.drink  = req.body.drink;
-        	order.price = req.body.price;
-         	order.shop = req.body.shop;
-         	order.total = req.body.total;
-         	order.yourname = req.body.yourname;
-         	order.date = req.body.date;
-         	 order.save(function(err) {
+         Order.findOneAndUpdate({'yourname':req.body.yourname,'date':req.body.date},{$set:{
+         	amount:req.body.amount,
+         	drink:req.body.drink,
+         	price:req.body.price,
+         	shop:req.body.shop,
+         	total:req.body.total,
+         	yourname:req.body.yourname,
+         	date:req.body.date
+         }},{new:true}, function(err, order) {
                 if (err)
-                    res.send(err);
+                    console.log("something Wrong");
 
                 res.status(200).json(order);
             });
-        });
     }); 
     router.route('/deleteorder')
     .post(function(req, res) {
          Order.remove({
-            'yourname': 'req.body.yourname',
-            'date': 'req.body.date'
+            yourname: req.body.yourname,
+            date: req.body.date
         }, function(err, order) {
             if (err)
                 res.send({message : 'cannot delete the order'});
