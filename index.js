@@ -4,7 +4,13 @@ var bodyParser = require('body-parser');
 var Order    = require('./MODELS/order');
 var mongoose = require('mongoose');
  
-mongoose.connect('mongodb://ec2-52-41-97-191.us-west-2.compute.amazonaws.com/starbucks');
+mongoose.connect('mongodb://ec2-34-208-211-160.us-west-2.compute.amazonaws.com/starbucks');
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  // we're connected!
+  console.log('greeting');
+});
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 var STATUS = "";
@@ -28,11 +34,12 @@ router.route('/order')
         
          var order = new Order();
          order.amount = req.body.amount ;
-         order.drink  = req.body.amount;
+         order.drink  = req.body.drink;
          order.price = req.body.price;
          order.shop = req.body.shop;
          order.total = req.body.total;
          order.yourname = req.body.yourname;
+         order.date = req.body.date;
  
           order.save(function(err) {
             //order_id =order.id ;
@@ -61,20 +68,76 @@ router.route('/order')
             res.status(200).json(order);
         });
     });
-       
-router.route('/order/:order_id')
-    .get(function(req, res) {
-        Order.findById(req.params.order_id, function(err, order) {
+
+ router.route('/getorder')
+    .post(function(req, res) {
+        Order.find({'yourname':req.body.yourname}, function(err, order) {
             if (err)
-                res.status(404).send({message : 'Order not found'});
+                res.status(404).send({message : 'Your name not found'});
+            res.status(200).json(order);
+        });
+    }); 
+  router.route('/updateorder')
+    .post(function(req, res) {
+         Order.find({'yourname':req.body.yourname,'date':req.body.date}, function(err, order) {
+
+            if (err)
+                res.send({message : 'Cannot update the order'});
+         	var order = new Order();
+            order.amount = req.body.amount ;
+         	order.drink  = req.body.drink;
+        	order.price = req.body.price;
+         	order.shop = req.body.shop;
+         	order.total = req.body.total;
+         	order.yourname = req.body.yourname;
+         	order.date = req.body.date;
+         	 order.save(function(err) {
+                if (err)
+                    res.send(err);
+
+                res.status(200).json(order);
+            });
+        });
+    }); 
+    router.route('/deleteorder')
+    .post(function(req, res) {
+         Order.remove({
+            'yourname': 'req.body.yourname',
+            'date': 'req.body.date'
+        }, function(err, order) {
+            if (err)
+                res.send({message : 'cannot delete the order'});
+
+            res.json({ message: 'Successfully deleted' });
+        });
+    });
+router.route('/order/:yourname')
+    .get(function(req, res) {
+        Order.find({'yourname':req.params.yourname}, function(err, order) {
+            if (err)
+                res.status(404).send({message : 'Your name not found'});
             res.status(200).json(order);
         });
     })
 
 
-    .put(function(req, res) {
+   
 
-        Order.findById(req.params.order_id, function(err, order) {
+
+    .delete(function(req, res) {
+        Order.remove({
+            yourname: req.params.yourname
+        }, function(err, order) {
+            if (err)
+                res.send({message : 'cannot delete the order'});
+
+            res.json({ message: 'Successfully deleted' });
+        });
+    });
+router.route('/order/:yourname/:date')
+	 .put(function(req, res) {
+
+        Order.find({'yourname':req.params.yourname,'date':req.params.date}, function(err, order) {
 
             if (err)
                 res.send({message : 'Cannot update the order'});
@@ -85,31 +148,12 @@ router.route('/order/:order_id')
          	order.shop = req.body.shop;
          	order.total = req.body.total;
          	order.yourname = req.body.yourname;
-
+         	order.date = req.body.date;
         
-            order.save(function(err) {
-                if (err)
-                    res.send(err);
-
-                res.status(200).json({ message: 'Order updated!' });
-            });
+           
 
         });
     })
-
-
-    .delete(function(req, res) {
-        Order.remove({
-            _id: req.params.order_id
-        }, function(err, order) {
-            if (err)
-                res.send({message : 'cannot delete the order'});
-
-            res.json({ message: 'Successfully deleted' });
-        });
-    });
-
-
 
 
 

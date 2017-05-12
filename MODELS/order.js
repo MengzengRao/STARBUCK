@@ -9,7 +9,8 @@ var OrderSchema   = new Schema({
     price: String,
     shop: String,
     total: String,
-    yourname: String 
+    yourname: String,
+    date:String 
 
 });
 
